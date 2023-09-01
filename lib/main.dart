@@ -135,7 +135,25 @@ class _HomeState extends State<Home> {
               ),
             ),
             Container(
-              child: WindowTitleBarBox(child: MoveWindow()),
+              child: WindowTitleBarBox(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    MoveWindow(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 6.0),
+                        child: Text(
+                          'Terminal',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
