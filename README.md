@@ -28,8 +28,10 @@ This is a simple yet customizable terminal emulator written in Flutter.
 ## Features
 
 - [ ] oh-my-zsh support
+- [ ] AI Implementation
 - [ ] Terminal plugins
 - [ ] Customizable
+- [ ] Initial Text
 - [ ] Customizable key bindings
 - [ ] Customizable themes
 - [ ] Customizable fonts
@@ -69,6 +71,11 @@ example: `flutter build macos`
 ```bash
 flutter build <platform>
 ```
+
+## Plugins
+
+It will only support plugins that are built specifically for this terminal emulator, [Mantresh Khurana](https://github.com/mantreshkhurana) is the only one who can verify and add your plugins to the official plugin list.
+Plugins will be built in shell script and will be implemented in the terminal emulator using dart, docs for building plugins will be available soon.
 
 ## Contributing
 

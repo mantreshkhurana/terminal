@@ -142,12 +142,16 @@ class _HomeState extends State<Home> {
                     MoveWindow(
                       child: Padding(
                         padding: const EdgeInsets.only(top: 6.0),
-                        child: Text(
-                          'Terminal',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                          ),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Terminal',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
