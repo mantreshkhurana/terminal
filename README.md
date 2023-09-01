@@ -28,6 +28,7 @@ This is a simple yet customizable terminal emulator written in Flutter.
 ## Features
 
 - [ ] oh-my-zsh support
+- [ ] Auto App Updater
 - [ ] AI Implementation
 - [ ] Terminal plugins
 - [ ] Customizable
