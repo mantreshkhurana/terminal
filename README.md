@@ -21,9 +21,9 @@ This is a simple yet customizable terminal emulator written in Flutter.
 
 ## Supported OSs
 
-- [x] macOS
-- [x] Linux
-- [x] Windows
+- [x] macOS(zsh/bash)
+- [x] Linux(zsh/bash)
+- [x] Windows(cmd)
 
 ## Features
 
@@ -49,7 +49,7 @@ This is a simple yet customizable terminal emulator written in Flutter.
 ## Installation
 
 ```bash
-git clone https://github.com/spyxpo/terminal.git
+git clone https://github.com/mantreshkhurana/terminal.git
 cd terminal
 flutter pub get
 ```

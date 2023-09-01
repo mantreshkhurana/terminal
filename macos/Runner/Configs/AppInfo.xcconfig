@@ -8,7 +8,7 @@
 PRODUCT_NAME = Terminal;
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.spyxpo.terminal;
+PRODUCT_BUNDLE_IDENTIFIER = com.mantreshkhurana.terminal;
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2023 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2023 Mantresh Khurana. All rights reserved.
