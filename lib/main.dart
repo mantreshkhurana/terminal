@@ -1,14 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-
-import 'src/platform_menu.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_pty/flutter_pty.dart';
 import 'package:xterm/xterm.dart';
+
+import 'src/platform_menu.dart';
 
 void main() {
   runApp(MyApp());
@@ -39,7 +38,6 @@ class MyApp extends StatelessWidget {
       title: 'Terminal',
       debugShowCheckedModeBanner: false,
       home: AppPlatformMenu(child: Home()),
-      // shortcuts: ,
     );
   }
 }
@@ -48,7 +46,6 @@ class Home extends StatefulWidget {
   Home({Key? key}) : super(key: key);
 
   @override
-  // ignore: library_private_types_in_public_api
   _HomeState createState() => _HomeState();
 }
 
@@ -59,7 +56,7 @@ class _HomeState extends State<Home> {
 
   final terminalController = TerminalController();
 
-  late final Pty pty;
+  late Pty pty;
 
   @override
   void initState() {
@@ -72,7 +69,11 @@ class _HomeState extends State<Home> {
     );
   }
 
-  void _startPty() {
+  void _startPty() async {
+    if (!await isOhMyZshInstalled()) {
+      await installOhMyZsh();
+    }
+
     pty = Pty.start(
       shell,
       columns: terminal.viewWidth,
@@ -141,16 +142,27 @@ class _HomeState extends State<Home> {
       ),
     );
   }
-}
 
-String get shell {
-  if (Platform.isMacOS || Platform.isLinux) {
-    return Platform.environment['SHELL'] ?? 'zsh';
+  String get shell {
+    if (Platform.isMacOS || Platform.isLinux) {
+      return Platform.environment['SHELL'] ?? 'zsh';
+    }
+
+    if (Platform.isWindows) {
+      return 'cmd.exe';
+    }
+
+    return 'sh';
   }
 
-  if (Platform.isWindows) {
-    return 'cmd.exe';
+  Future<bool> isOhMyZshInstalled() async {
+    final homeDir = Platform.environment['HOME'];
+    if (homeDir != null) {
+      final ohMyZshDir = Directory('$homeDir/.oh-my-zsh');
+      return ohMyZshDir.existsSync();
+    }
+    return false;
   }
 
-  return 'sh';
+  Future<void> installOhMyZsh() async {}
 }
