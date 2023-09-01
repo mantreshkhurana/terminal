@@ -1,0 +1,28 @@
+PODS:
+  - bitsdojo_window_macos (0.0.1):
+    - FlutterMacOS
+  - flutter_pty (0.0.1):
+    - FlutterMacOS
+  - FlutterMacOS (1.0.0)
+
+DEPENDENCIES:
+  - bitsdojo_window_macos (from `Flutter/ephemeral/.symlinks/plugins/bitsdojo_window_macos/macos`)
+  - flutter_pty (from `Flutter/ephemeral/.symlinks/plugins/flutter_pty/macos`)
+  - FlutterMacOS (from `Flutter/ephemeral`)
+
+EXTERNAL SOURCES:
+  bitsdojo_window_macos:
+    :path: Flutter/ephemeral/.symlinks/plugins/bitsdojo_window_macos/macos
+  flutter_pty:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_pty/macos
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+
+SPEC CHECKSUMS:
+  bitsdojo_window_macos: 44e3b8fe3dd463820e0321f6256c5b1c16bb6a00
+  flutter_pty: 41b6f848ade294be726a6b94cdd4a67c3bc52f59
+  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
+
+PODFILE CHECKSUM: 353c8bcc5d5b0994e508d035b5431cfe18c1dea7
+
+COCOAPODS: 1.12.0
