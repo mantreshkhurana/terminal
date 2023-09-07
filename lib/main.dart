@@ -1,9 +1,11 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:bitsdojo_window/bitsdojo_window.dart';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
+
+import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_pty/flutter_pty.dart';
 import 'package:xterm/xterm.dart';
 
@@ -12,14 +14,16 @@ import 'src/platform_menu.dart';
 void main() {
   runApp(MyApp());
 
-  doWhenWindowReady(() {
-    const initialSize = Size(600, 450);
-    appWindow.minSize = initialSize;
-    appWindow.size = initialSize;
-    appWindow.alignment = Alignment.center;
-    appWindow.title = 'Terminal';
-    appWindow.show();
-  });
+  doWhenWindowReady(
+    () {
+      const initialSize = Size(600, 450);
+      appWindow.minSize = initialSize;
+      appWindow.size = initialSize;
+      appWindow.alignment = Alignment.center;
+      appWindow.title = 'Terminal';
+      appWindow.show();
+    },
+  );
 }
 
 bool get isDesktop {
@@ -43,10 +47,10 @@ class MyApp extends StatelessWidget {
 }
 
 class Home extends StatefulWidget {
-  Home({Key? key}) : super(key: key);
+  const Home({super.key});
 
   @override
-  _HomeState createState() => _HomeState();
+  State createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
