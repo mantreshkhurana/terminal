@@ -140,18 +140,24 @@ class _HomeState extends State<Home> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     MoveWindow(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 6.0),
-                        child: Row(
-                          children: [
-                            Text(
-                              'Terminal',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 13,
+                      child: Container(
+                        color: Colors.transparent,
+                        width: MediaQuery.of(context).size.width,
+                        height: 30,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 6.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Terminal',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
