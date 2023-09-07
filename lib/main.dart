@@ -102,7 +102,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.black,
       body: SafeArea(
         child: Stack(
           children: [
@@ -141,7 +141,7 @@ class _HomeState extends State<Home> {
                   children: [
                     MoveWindow(
                       child: Container(
-                        color: Colors.transparent,
+                        color: Colors.black,
                         width: MediaQuery.of(context).size.width,
                         height: 30,
                         child: Padding(
