@@ -28,15 +28,7 @@ class SuggestionEngine {
     bool isComplete,
   ) sync* {
     assert(input.isNotEmpty);
-
-    // The subcommand scope we are currently in.
     FigCommand? currentCommand;
-
-    // The last suggestion we recongnized. This is used to determine what to
-    // suggest next. Valid values are:
-    // - null: We are at the root of the command.
-    // - currentCommand
-    // - option of currentCommand
     FigToken? last;
 
     for (final part in input) {
@@ -93,7 +85,6 @@ class SuggestionEngine {
 }
 
 extension _FigSuggestionSearch<T extends FigSuggestion> on Iterable<T> {
-  /// Finds the first suggestion that matches [name].
   T? match(String name) {
     for (final suggestion in this) {
       if (suggestion.names.contains(name)) {
@@ -103,7 +94,6 @@ extension _FigSuggestionSearch<T extends FigSuggestion> on Iterable<T> {
     return null;
   }
 
-  /// Finds all suggestions that start with [name].
   Iterable<T> matchPrefix(String name) sync* {
     for (final suggestion in this) {
       if (suggestion.names.any((e) => e.startsWith(name))) {
@@ -113,14 +103,12 @@ extension _FigSuggestionSearch<T extends FigSuggestion> on Iterable<T> {
   }
 }
 
-/// A token of a command.
 sealed class FigToken {
   final String? description;
 
   const FigToken({this.description});
 }
 
-/// A token of a command that can be suggested.
 sealed class FigSuggestion extends FigToken {
   final List<String> names;
 
@@ -173,17 +161,11 @@ class FigCommand extends FigSuggestion {
 
 class FigOption extends FigSuggestion {
   final List<FigArgument> args;
-
   final bool isPersistent;
-
   final bool isRequired;
-
   final String? separator;
-
   final int? repeat;
-
   final List<String> exclusiveOn;
-
   final List<String> dependsOn;
 
   FigOption({
@@ -208,7 +190,6 @@ class FigOption extends FigSuggestion {
       isPersistent: json['isPersistent'] ?? false,
       isRequired: json['isRequired'] ?? false,
       separator: json['separator'],
-      // ignore: prefer-trailing-comma
       repeat: switch (json['isRepeatable']) {
         true => 0xFFFF,
         int count => count,

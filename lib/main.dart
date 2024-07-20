@@ -2,8 +2,8 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flutter_pty/flutter_pty.dart';
@@ -14,16 +14,15 @@ import 'src/platform_menu.dart';
 void main() {
   runApp(MyApp());
 
-  doWhenWindowReady(
-    () {
-      const initialSize = Size(600, 450);
-      appWindow.minSize = initialSize;
-      appWindow.size = initialSize;
-      appWindow.alignment = Alignment.center;
-      appWindow.title = 'Terminal';
-      appWindow.show();
-    },
-  );
+  doWhenWindowReady(() {
+    const initialSize = Size(600, 450);
+    appWindow
+      ..minSize = initialSize
+      ..size = initialSize
+      ..alignment = Alignment.center
+      ..title = 'Terminal'
+      ..show();
+  });
 }
 
 bool get isDesktop {
@@ -50,30 +49,24 @@ class Home extends StatefulWidget {
   const Home({super.key});
 
   @override
-  State createState() => _HomeState();
+  State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  final terminal = Terminal(
-    maxLines: 10000,
-  );
-
-  final terminalController = TerminalController();
+  final Terminal terminal = Terminal(maxLines: 10000);
+  final TerminalController terminalController = TerminalController();
 
   late Pty pty;
 
   @override
   void initState() {
     super.initState();
-
-    WidgetsBinding.instance.endOfFrame.then(
-      (_) {
-        if (mounted) _startPty();
-      },
-    );
+    WidgetsBinding.instance.endOfFrame.then((_) {
+      if (mounted) _startPty();
+    });
   }
 
-  void _startPty() async {
+  Future<void> _startPty() async {
     if (!await isOhMyZshInstalled()) {
       await installOhMyZsh();
     }
@@ -85,22 +78,19 @@ class _HomeState extends State<Home> {
       workingDirectory: Platform.environment['HOME'] ?? '~',
     );
 
-    pty.output
-        .cast<List<int>>()
-        .transform(Utf8Decoder())
-        .listen(terminal.write);
+    pty.output.cast<List<int>>().transform(utf8.decoder).listen(terminal.write);
 
     pty.exitCode.then((code) {
       terminal.write('the process exited with exit code $code');
     });
 
-    terminal.onOutput = (data) {
-      pty.write(const Utf8Encoder().convert(data));
-    };
-
-    terminal.onResize = (w, h, pw, ph) {
-      pty.resize(h, w);
-    };
+    terminal
+      ..onOutput = (data) {
+        pty.write(utf8.encode(data));
+      }
+      ..onResize = (w, h, pw, ph) {
+        pty.resize(h, w);
+      };
   }
 
   @override
@@ -111,12 +101,7 @@ class _HomeState extends State<Home> {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.only(
-                top: 30.0,
-                left: 8,
-                right: 8,
-                bottom: 8,
-              ),
+              padding: const EdgeInsets.all(8.0).copyWith(top: 30.0),
               child: TerminalView(
                 terminal,
                 controller: terminalController,
@@ -148,19 +133,13 @@ class _HomeState extends State<Home> {
                         color: Colors.black,
                         width: MediaQuery.of(context).size.width,
                         height: 30,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 6.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Terminal',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
+                        child: Center(
+                          child: Text(
+                            'Terminal',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ),
@@ -178,12 +157,9 @@ class _HomeState extends State<Home> {
   String get shell {
     if (Platform.isMacOS || Platform.isLinux) {
       return Platform.environment['SHELL'] ?? 'zsh';
-    }
-
-    if (Platform.isWindows) {
+    } else if (Platform.isWindows) {
       return 'cmd.exe';
     }
-
     return 'sh';
   }
 
@@ -196,5 +172,34 @@ class _HomeState extends State<Home> {
     return false;
   }
 
-  Future<void> installOhMyZsh() async {}
+  Future<void> installOhMyZsh() async {
+    final homeDir = Platform.environment['HOME'];
+    if (homeDir != null) {
+      final ohMyZshDir = Directory('$homeDir/.oh-my-zsh');
+      if (!ohMyZshDir.existsSync()) {
+        try {
+          final result = await Process.run(
+            'sh',
+            [
+              '-c',
+              'sh -c "\$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
+            ],
+            environment: {'HOME': homeDir},
+          );
+
+          if (result.exitCode != 0) {
+            print('Oh My Zsh installation failed: ${result.stderr}');
+          } else {
+            print('Oh My Zsh installed successfully.');
+          }
+        } catch (e) {
+          print('Error during Oh My Zsh installation: $e');
+        }
+      } else {
+        print('Oh My Zsh is already installed.');
+      }
+    } else {
+      print('HOME environment variable is not set.');
+    }
+  }
 }

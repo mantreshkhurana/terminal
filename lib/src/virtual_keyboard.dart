@@ -3,7 +3,6 @@ import 'package:xterm/xterm.dart';
 
 class VirtualKeyboardView extends StatelessWidget {
   const VirtualKeyboardView(this.keyboard, {super.key});
-
   final VirtualKeyboard keyboard;
 
   @override
@@ -33,11 +32,8 @@ class VirtualKeyboardView extends StatelessWidget {
 
 class VirtualKeyboard extends TerminalInputHandler with ChangeNotifier {
   final TerminalInputHandler _inputHandler;
-
   VirtualKeyboard(this._inputHandler);
-
   bool _ctrl = false;
-
   bool get ctrl => _ctrl;
 
   set ctrl(bool value) {

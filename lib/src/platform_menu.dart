@@ -5,7 +5,6 @@ import 'package:flutter/widgets.dart';
 
 class AppPlatformMenu extends StatefulWidget {
   const AppPlatformMenu({super.key, required this.child});
-
   final Widget child;
 
   @override
@@ -22,7 +21,7 @@ class _AppPlatformMenuState extends State<AppPlatformMenu> {
     return PlatformMenuBar(
       menus: [
         PlatformMenu(
-          label: 'TerminalStudio',
+          label: 'Terminal',
           menus: [
             if (PlatformProvidedMenuItem.hasMenu(
               PlatformProvidedMenuItemType.about,
