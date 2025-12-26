@@ -28,19 +28,19 @@ This is a simple yet customizable terminal emulator written in Flutter.
 ## Features
 
 - [x] oh-my-zsh support
+- [x] AI Implementation (Ollama/OpenAI/Gemini support with chat panel)
+- [x] Customizable settings (hover over terminal to reveal settings icon)
+- [x] Customizable key bindings
+- [x] Customizable themes (Default Dark, Dracula, Solarized, Monokai, Nord, One Dark, Gruvbox)
+- [x] Customizable fonts (size and family)
+- [x] Customizable cursor (style: block/underline/bar, blink, color)
+- [x] Customizable shell
+- [x] Customizable shell arguments
+- [x] Customizable shell environment variables
+- [x] Customizable shell aliases
 - [ ] Auto App Updater
-- [ ] AI Implementation
 - [ ] Terminal plugins
-- [ ] Customizable
 - [ ] Initial Text
-- [ ] Customizable key bindings
-- [ ] Customizable themes
-- [ ] Customizable fonts
-- [ ] Customizable cursor
-- [ ] Customizable shell
-- [ ] Customizable shell arguments
-- [ ] Customizable shell environment variables
-- [ ] Customizable shell aliases
 
 ## Requirements
 
