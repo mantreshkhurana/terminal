@@ -132,58 +132,131 @@ class _HomeState extends State<Home> {
     super.dispose();
   }
 
+  // Check if a key event matches a key binding string (e.g., "Ctrl+Shift+T")
+  bool _matchesKeyBinding(KeyEvent event, String binding) {
+    if (binding.isEmpty) return false;
+
+    final parts = binding.split('+').map((s) => s.trim().toLowerCase()).toList();
+    final keyPart = parts.last;
+    final modifiers = parts.sublist(0, parts.length - 1);
+
+    // Check modifiers
+    final needsCtrl = modifiers.contains('ctrl');
+    final needsShift = modifiers.contains('shift');
+    final needsAlt = modifiers.contains('alt');
+    final needsMeta = modifiers.contains('meta') || modifiers.contains('cmd');
+
+    final hasCtrl = HardwareKeyboard.instance.isControlPressed;
+    final hasShift = HardwareKeyboard.instance.isShiftPressed;
+    final hasAlt = HardwareKeyboard.instance.isAltPressed;
+    final hasMeta = HardwareKeyboard.instance.isMetaPressed;
+
+    // On macOS, treat Ctrl in binding as Cmd for convenience
+    final ctrlOrMeta = Platform.isMacOS ? (hasMeta || hasCtrl) : hasCtrl;
+
+    if (needsCtrl && !ctrlOrMeta) return false;
+    if (needsShift && !hasShift) return false;
+    if (needsAlt && !hasAlt) return false;
+    if (needsMeta && !hasMeta) return false;
+
+    // Match the key
+    final logicalKey = event.logicalKey;
+
+    // Map of key names to LogicalKeyboardKey
+    final keyMap = <String, LogicalKeyboardKey>{
+      'a': LogicalKeyboardKey.keyA,
+      'b': LogicalKeyboardKey.keyB,
+      'c': LogicalKeyboardKey.keyC,
+      'd': LogicalKeyboardKey.keyD,
+      'e': LogicalKeyboardKey.keyE,
+      'f': LogicalKeyboardKey.keyF,
+      'g': LogicalKeyboardKey.keyG,
+      'h': LogicalKeyboardKey.keyH,
+      'i': LogicalKeyboardKey.keyI,
+      'j': LogicalKeyboardKey.keyJ,
+      'k': LogicalKeyboardKey.keyK,
+      'l': LogicalKeyboardKey.keyL,
+      'm': LogicalKeyboardKey.keyM,
+      'n': LogicalKeyboardKey.keyN,
+      'o': LogicalKeyboardKey.keyO,
+      'p': LogicalKeyboardKey.keyP,
+      'q': LogicalKeyboardKey.keyQ,
+      'r': LogicalKeyboardKey.keyR,
+      's': LogicalKeyboardKey.keyS,
+      't': LogicalKeyboardKey.keyT,
+      'u': LogicalKeyboardKey.keyU,
+      'v': LogicalKeyboardKey.keyV,
+      'w': LogicalKeyboardKey.keyW,
+      'x': LogicalKeyboardKey.keyX,
+      'y': LogicalKeyboardKey.keyY,
+      'z': LogicalKeyboardKey.keyZ,
+      '1': LogicalKeyboardKey.digit1,
+      '2': LogicalKeyboardKey.digit2,
+      '3': LogicalKeyboardKey.digit3,
+      '4': LogicalKeyboardKey.digit4,
+      '5': LogicalKeyboardKey.digit5,
+      '6': LogicalKeyboardKey.digit6,
+      '7': LogicalKeyboardKey.digit7,
+      '8': LogicalKeyboardKey.digit8,
+      '9': LogicalKeyboardKey.digit9,
+      '0': LogicalKeyboardKey.digit0,
+      'tab': LogicalKeyboardKey.tab,
+      'enter': LogicalKeyboardKey.enter,
+      'escape': LogicalKeyboardKey.escape,
+      'esc': LogicalKeyboardKey.escape,
+      'space': LogicalKeyboardKey.space,
+      'backspace': LogicalKeyboardKey.backspace,
+      'delete': LogicalKeyboardKey.delete,
+      'up': LogicalKeyboardKey.arrowUp,
+      'down': LogicalKeyboardKey.arrowDown,
+      'left': LogicalKeyboardKey.arrowLeft,
+      'right': LogicalKeyboardKey.arrowRight,
+      'pageup': LogicalKeyboardKey.pageUp,
+      'pagedown': LogicalKeyboardKey.pageDown,
+      'home': LogicalKeyboardKey.home,
+      'end': LogicalKeyboardKey.end,
+    };
+
+    final expectedKey = keyMap[keyPart];
+    return expectedKey != null && logicalKey == expectedKey;
+  }
+
   // Handle keyboard shortcuts for tab navigation
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
-    final isCtrl = HardwareKeyboard.instance.isControlPressed;
-    final isMeta = HardwareKeyboard.instance.isMetaPressed;
-    final isShift = HardwareKeyboard.instance.isShiftPressed;
-    final modifier = Platform.isMacOS ? isMeta : isCtrl;
+    final settings = context.read<TerminalSettings>();
+    final bindings = settings.keyBindings;
 
-    // Ctrl/Cmd + T: New tab
-    if (modifier && event.logicalKey == LogicalKeyboardKey.keyT) {
+    // New tab
+    if (_matchesKeyBinding(event, bindings['newTab'] ?? '')) {
       _createNewTab();
       return KeyEventResult.handled;
     }
 
-    // Ctrl/Cmd + W: Close current tab
-    if (modifier && event.logicalKey == LogicalKeyboardKey.keyW) {
+    // Close tab
+    if (_matchesKeyBinding(event, bindings['closeTab'] ?? '')) {
       _closeTab(_currentTabIndex);
       return KeyEventResult.handled;
     }
 
-    // Ctrl/Cmd + Tab or Ctrl/Cmd + PageDown: Next tab
-    if (modifier && (event.logicalKey == LogicalKeyboardKey.tab && !isShift ||
-        event.logicalKey == LogicalKeyboardKey.pageDown)) {
+    // Next tab
+    if (_matchesKeyBinding(event, bindings['nextTab'] ?? '')) {
       _selectTab((_currentTabIndex + 1) % _tabs.length);
       return KeyEventResult.handled;
     }
 
-    // Ctrl/Cmd + Shift + Tab or Ctrl/Cmd + PageUp: Previous tab
-    if (modifier && (event.logicalKey == LogicalKeyboardKey.tab && isShift ||
-        event.logicalKey == LogicalKeyboardKey.pageUp)) {
+    // Previous tab
+    if (_matchesKeyBinding(event, bindings['previousTab'] ?? '')) {
       _selectTab((_currentTabIndex - 1 + _tabs.length) % _tabs.length);
       return KeyEventResult.handled;
     }
 
-    // Ctrl/Cmd + 1-9: Switch to tab by number
-    final numberKeys = [
-      LogicalKeyboardKey.digit1,
-      LogicalKeyboardKey.digit2,
-      LogicalKeyboardKey.digit3,
-      LogicalKeyboardKey.digit4,
-      LogicalKeyboardKey.digit5,
-      LogicalKeyboardKey.digit6,
-      LogicalKeyboardKey.digit7,
-      LogicalKeyboardKey.digit8,
-      LogicalKeyboardKey.digit9,
-    ];
-
-    for (int i = 0; i < numberKeys.length; i++) {
-      if (modifier && event.logicalKey == numberKeys[i]) {
-        if (i < _tabs.length) {
-          _selectTab(i);
+    // Tab 1-9
+    for (int i = 1; i <= 9; i++) {
+      if (_matchesKeyBinding(event, bindings['tab$i'] ?? '')) {
+        if (i - 1 < _tabs.length) {
+          _selectTab(i - 1);
           return KeyEventResult.handled;
         }
       }

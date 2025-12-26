@@ -46,6 +46,17 @@ class TerminalSettings extends ChangeNotifier {
     'clear': 'Ctrl+L',
     'newTab': 'Ctrl+T',
     'closeTab': 'Ctrl+W',
+    'nextTab': 'Ctrl+Tab',
+    'previousTab': 'Ctrl+Shift+Tab',
+    'tab1': 'Ctrl+1',
+    'tab2': 'Ctrl+2',
+    'tab3': 'Ctrl+3',
+    'tab4': 'Ctrl+4',
+    'tab5': 'Ctrl+5',
+    'tab6': 'Ctrl+6',
+    'tab7': 'Ctrl+7',
+    'tab8': 'Ctrl+8',
+    'tab9': 'Ctrl+9',
   };
 
   // Getters
@@ -343,6 +354,17 @@ class TerminalSettings extends ChangeNotifier {
       'clear': 'Ctrl+L',
       'newTab': 'Ctrl+T',
       'closeTab': 'Ctrl+W',
+      'nextTab': 'Ctrl+Tab',
+      'previousTab': 'Ctrl+Shift+Tab',
+      'tab1': 'Ctrl+1',
+      'tab2': 'Ctrl+2',
+      'tab3': 'Ctrl+3',
+      'tab4': 'Ctrl+4',
+      'tab5': 'Ctrl+5',
+      'tab6': 'Ctrl+6',
+      'tab7': 'Ctrl+7',
+      'tab8': 'Ctrl+8',
+      'tab9': 'Ctrl+9',
     };
     notifyListeners();
     await _saveSettings();
