@@ -51,7 +51,14 @@ build/installers/
 cd path\to\terminal
 
 # Run the installer build script
-.\installers\windows\build_installer.ps1
+powershell -ExecutionPolicy Bypass -File .\installers\windows\build_installer.ps1
+
+or
+
+# From Command Prompt
+cd path\to\terminal
+powershell -ExecutionPolicy Bypass -File .\installers\windows\build_installer
+
 
 # Options:
 #   -Clean            Clean previous builds first
