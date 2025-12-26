@@ -6,6 +6,7 @@ This is a simple yet customizable terminal emulator written in Flutter.
 
 - [Screenshots](#screenshots)
 - [Supported OSs](#supported-oss)
+- [Downloads](#downloads)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -24,6 +25,10 @@ This is a simple yet customizable terminal emulator written in Flutter.
 - [x] macOS(zsh/bash)
 - [x] Linux(zsh/bash)
 - [x] Windows(cmd)
+
+## Downloads
+
+You can download the latest release from the [Releases](https://github.com/mantreshkhurana/terminal/releases) page.
 
 ## Features
 
