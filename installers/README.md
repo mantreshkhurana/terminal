@@ -19,7 +19,8 @@ This directory contains scripts and configurations for building distributable in
 ### Output Location
 
 All built installers are placed in:
-```
+
+```txt
 build/installers/
 ├── windows/
 │   └── Terminal-1.0.0-Setup.exe
@@ -38,6 +39,7 @@ build/installers/
 ### Windows
 
 **Requirements:**
+
 - Windows 10 or later
 - Flutter SDK
 - [Inno Setup 6](https://jrsoftware.org/isinfo.php) (free installer creator)
@@ -59,6 +61,7 @@ cd path\to\terminal
 **Output:** `build\installers\windows\Terminal-1.0.0-Setup.exe`
 
 The Windows installer:
+
 - Creates Start Menu shortcuts
 - Optional desktop shortcut
 - Proper uninstaller with Add/Remove Programs entry
@@ -69,6 +72,7 @@ The Windows installer:
 ### macOS
 
 **Requirements:**
+
 - macOS 10.15 (Catalina) or later
 - Flutter SDK
 - Xcode Command Line Tools
@@ -91,11 +95,13 @@ The Windows installer:
 **Output:** `build/installers/macos/Terminal-1.0.0-macOS.dmg`
 
 The DMG:
+
 - Drag-and-drop installation to Applications
 - Proper volume icon
 - Clean, professional appearance
 
 **Note:** For distribution outside the Mac App Store, you may want to:
+
 1. Sign the app with a Developer ID certificate
 2. Notarize the app with Apple
 
@@ -104,6 +110,7 @@ The DMG:
 ### Linux
 
 **Requirements:**
+
 - Linux (Ubuntu 20.04+ or equivalent)
 - Flutter SDK
 - GTK3 development libraries: `sudo apt install libgtk-3-dev`
@@ -134,6 +141,7 @@ The DMG:
 ```
 
 **Output:**
+
 - `build/installers/linux/Terminal-1.0.0-x86_64.AppImage`
 - `build/installers/linux/terminal-emulator_1.0.0_amd64.deb`
 - `build/installers/linux/terminal-emulator-1.0.0-1.x86_64.rpm`
@@ -156,7 +164,7 @@ sudo dnf install terminal-emulator-1.0.0-1.x86_64.rpm
 
 ## Directory Structure
 
-```
+```txt
 installers/
 ├── README.md              # This file
 ├── build_all.sh           # Unified build script
@@ -180,6 +188,7 @@ installers/
 The version number is defined in `pubspec.yaml`. To update the version:
 
 1. Edit `pubspec.yaml`:
+
    ```yaml
    version: 1.0.1+2  # semantic version + build number
    ```
@@ -193,28 +202,35 @@ The version number is defined in `pubspec.yaml`. To update the version:
 ## Troubleshooting
 
 ### Windows: "Inno Setup not found"
-Install Inno Setup 6 from https://jrsoftware.org/isinfo.php
+
+Install Inno Setup 6 from <https://jrsoftware.org/isinfo.php>
 
 ### macOS: "create-dmg not found"
+
 ```bash
 brew install create-dmg
 # Or use the standard build_dmg.sh which uses hdiutil
 ```
 
 ### Linux: "appimagetool failed"
+
 Ensure you have FUSE installed:
+
 ```bash
 sudo apt install fuse libfuse2  # Ubuntu/Debian
 sudo dnf install fuse fuse-libs  # Fedora
 ```
 
 ### Linux: ".deb build fails"
+
 Ensure dpkg-dev is installed:
+
 ```bash
 sudo apt install dpkg-dev
 ```
 
 ### General: "Flutter build failed"
+
 ```bash
 flutter doctor  # Check Flutter installation
 flutter clean   # Clean build cache
@@ -225,15 +241,19 @@ flutter pub get # Update dependencies
 
 ## Code Signing & Notarization
 
-### Windows
+### Windows Signing
+
 For production distribution, consider signing the installer with an Authenticode certificate.
 
-### macOS
+### macOS Signing
+
 For distribution outside the App Store:
+
 1. Sign with Developer ID: `codesign --deep --force --sign "Developer ID Application: Your Name" Terminal.app`
 2. Notarize with Apple: `xcrun notarytool submit Terminal.dmg --apple-id your@email.com --password app-specific-password --team-id TEAMID`
 
-### Linux
+### Linux Signing
+
 AppImages can be signed with GPG for verification.
 
 ---
