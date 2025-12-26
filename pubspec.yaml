@@ -30,6 +30,7 @@ dev_dependencies:
     sdk: flutter
 
   lints: ^4.0.0
+  icons_launcher: ^3.0.3
   # dart_code_metrics: ^4.16.0
 
 flutter:
@@ -37,8 +38,18 @@ flutter:
 
   assets:
     - assets/
+    - assets/images/
 
-  fonts:
-    - family: Cascadia Mono
-      fonts:
-        - asset: fonts/CascadiaMonoPL.ttf
+
+icons_launcher:
+  image_path: "assets/images/icon.png"
+  platforms:
+    macos:
+      enable: true
+      image_path: "assets/images/icon.png"
+    windows:
+      enable: true
+      image_path: "assets/images/icon.png"
+    linux:
+      enable: true
+      image_path: "assets/images/icon.png"

@@ -66,6 +66,32 @@ class MyApp extends StatelessWidget {
   }
 }
 
+class TerminalTab {
+  final String id;
+  final Terminal terminal;
+  final TerminalController controller;
+  late Pty pty;
+  String title;
+  String workingDirectory;
+  String currentProcess;
+
+  TerminalTab({
+    required this.id,
+    required this.terminal,
+    required this.controller,
+    this.title = 'zsh',
+    this.workingDirectory = '~',
+    this.currentProcess = 'zsh',
+  });
+
+  String get displayTitle {
+    // Format like Linux terminals: "process: directory"
+    final dirName = workingDirectory.split('/').last;
+    final displayDir = dirName.isEmpty ? '~' : dirName;
+    return '$currentProcess: $displayDir';
+  }
+}
+
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -74,16 +100,17 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final Terminal terminal = Terminal(maxLines: 10000);
-  final TerminalController terminalController = TerminalController();
+  final List<TerminalTab> _tabs = [];
+  int _currentTabIndex = 0;
+  int _tabCounter = 0;
 
-  late Pty pty;
   bool _isHoveringTerminal = false;
   bool _isHoveringButtons = false;
   bool _showAIChat = false;
   final TextEditingController _aiInputController = TextEditingController();
   final List<Map<String, String>> _aiMessages = [];
   bool _isAILoading = false;
+  final FocusNode _keyboardFocusNode = FocusNode();
 
   bool get _shouldShowButtons => _isHoveringTerminal || _isHoveringButtons || _showAIChat;
 
@@ -91,17 +118,146 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.endOfFrame.then((_) {
-      if (mounted) _startPty();
+      if (mounted) _createNewTab();
     });
   }
 
   @override
   void dispose() {
     _aiInputController.dispose();
+    _keyboardFocusNode.dispose();
+    for (final tab in _tabs) {
+      tab.pty.kill();
+    }
     super.dispose();
   }
 
-  Future<void> _startPty() async {
+  // Handle keyboard shortcuts for tab navigation
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+
+    final isCtrl = HardwareKeyboard.instance.isControlPressed;
+    final isMeta = HardwareKeyboard.instance.isMetaPressed;
+    final isShift = HardwareKeyboard.instance.isShiftPressed;
+    final modifier = Platform.isMacOS ? isMeta : isCtrl;
+
+    // Ctrl/Cmd + T: New tab
+    if (modifier && event.logicalKey == LogicalKeyboardKey.keyT) {
+      _createNewTab();
+      return KeyEventResult.handled;
+    }
+
+    // Ctrl/Cmd + W: Close current tab
+    if (modifier && event.logicalKey == LogicalKeyboardKey.keyW) {
+      _closeTab(_currentTabIndex);
+      return KeyEventResult.handled;
+    }
+
+    // Ctrl/Cmd + Tab or Ctrl/Cmd + PageDown: Next tab
+    if (modifier && (event.logicalKey == LogicalKeyboardKey.tab && !isShift ||
+        event.logicalKey == LogicalKeyboardKey.pageDown)) {
+      _selectTab((_currentTabIndex + 1) % _tabs.length);
+      return KeyEventResult.handled;
+    }
+
+    // Ctrl/Cmd + Shift + Tab or Ctrl/Cmd + PageUp: Previous tab
+    if (modifier && (event.logicalKey == LogicalKeyboardKey.tab && isShift ||
+        event.logicalKey == LogicalKeyboardKey.pageUp)) {
+      _selectTab((_currentTabIndex - 1 + _tabs.length) % _tabs.length);
+      return KeyEventResult.handled;
+    }
+
+    // Ctrl/Cmd + 1-9: Switch to tab by number
+    final numberKeys = [
+      LogicalKeyboardKey.digit1,
+      LogicalKeyboardKey.digit2,
+      LogicalKeyboardKey.digit3,
+      LogicalKeyboardKey.digit4,
+      LogicalKeyboardKey.digit5,
+      LogicalKeyboardKey.digit6,
+      LogicalKeyboardKey.digit7,
+      LogicalKeyboardKey.digit8,
+      LogicalKeyboardKey.digit9,
+    ];
+
+    for (int i = 0; i < numberKeys.length; i++) {
+      if (modifier && event.logicalKey == numberKeys[i]) {
+        if (i < _tabs.length) {
+          _selectTab(i);
+          return KeyEventResult.handled;
+        }
+      }
+    }
+
+    return KeyEventResult.ignored;
+  }
+
+  void _reorderTabs(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final tab = _tabs.removeAt(oldIndex);
+      _tabs.insert(newIndex, tab);
+
+      // Update current tab index if needed
+      if (_currentTabIndex == oldIndex) {
+        _currentTabIndex = newIndex;
+      } else if (oldIndex < _currentTabIndex && newIndex >= _currentTabIndex) {
+        _currentTabIndex--;
+      } else if (oldIndex > _currentTabIndex && newIndex <= _currentTabIndex) {
+        _currentTabIndex++;
+      }
+    });
+  }
+
+  void _createNewTab() {
+    final tabId = 'tab_${_tabCounter++}';
+    final terminal = Terminal(maxLines: 10000);
+    final controller = TerminalController();
+    final homeDir = Platform.environment['HOME'] ?? '~';
+    final shellName = shell.split('/').last;
+
+    final tab = TerminalTab(
+      id: tabId,
+      terminal: terminal,
+      controller: controller,
+      title: shellName,
+      workingDirectory: homeDir,
+      currentProcess: shellName,
+    );
+
+    setState(() {
+      _tabs.add(tab);
+      _currentTabIndex = _tabs.length - 1;
+    });
+
+    _startPtyForTab(tab);
+  }
+
+  void _closeTab(int index) {
+    if (_tabs.length <= 1) return; // Keep at least one tab
+
+    final tab = _tabs[index];
+    tab.pty.kill();
+
+    setState(() {
+      _tabs.removeAt(index);
+      if (_currentTabIndex >= _tabs.length) {
+        _currentTabIndex = _tabs.length - 1;
+      } else if (_currentTabIndex > index) {
+        _currentTabIndex--;
+      }
+    });
+  }
+
+  void _selectTab(int index) {
+    setState(() {
+      _currentTabIndex = index;
+    });
+  }
+
+  Future<void> _startPtyForTab(TerminalTab tab) async {
     final settings = context.read<TerminalSettings>();
 
     if (!await isOhMyZshInstalled()) {
@@ -126,27 +282,27 @@ class _HomeState extends State<Home> {
         ? settings.customShell
         : shell;
 
-    pty = Pty.start(
+    tab.pty = Pty.start(
       shellPath,
       arguments: settings.shellArguments,
-      columns: terminal.viewWidth,
-      rows: terminal.viewHeight,
+      columns: tab.terminal.viewWidth,
+      rows: tab.terminal.viewHeight,
       workingDirectory: Platform.environment['HOME'] ?? '~',
       environment: environment,
     );
 
-    pty.output.cast<List<int>>().transform(utf8.decoder).listen(terminal.write);
+    tab.pty.output.cast<List<int>>().transform(utf8.decoder).listen(tab.terminal.write);
 
-    pty.exitCode.then((code) {
-      terminal.write('the process exited with exit code $code');
+    tab.pty.exitCode.then((code) {
+      tab.terminal.write('the process exited with exit code $code');
     });
 
-    terminal
+    tab.terminal
       ..onOutput = (data) {
-        pty.write(utf8.encode(data));
+        tab.pty.write(utf8.encode(data));
       }
       ..onResize = (w, h, pw, ph) {
-        pty.resize(h, w);
+        tab.pty.resize(h, w);
       };
   }
 
@@ -182,74 +338,191 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Consumer<TerminalSettings>(
       builder: (context, settings, child) {
-        return Scaffold(
-          backgroundColor: settings.backgroundColor,
-          body: SafeArea(
-            child: Stack(
-              children: [
+        final currentTab = _tabs.isNotEmpty ? _tabs[_currentTabIndex] : null;
+
+        return Focus(
+          focusNode: _keyboardFocusNode,
+          onKeyEvent: _handleKeyEvent,
+          child: Scaffold(
+            backgroundColor: settings.backgroundColor,
+            body: SafeArea(
+              child: Stack(
+                children: [
                 // Terminal
-                MouseRegion(
-                  onEnter: (_) => setState(() => _isHoveringTerminal = true),
-                  onExit: (_) => setState(() => _isHoveringTerminal = false),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0).copyWith(top: 30.0),
-                    child: TerminalView(
-                      terminal,
-                      controller: terminalController,
-                      autofocus: true,
-                      backgroundOpacity: 0,
-                      textStyle: TerminalStyle(
-                        fontSize: settings.fontSize,
-                        fontFamily: settings.fontFamily,
-                      ),
-                      cursorType: _getCursorType(settings.cursorStyle),
-                      onSecondaryTapDown: (details, offset) async {
-                        final selection = terminalController.selection;
-                        if (selection != null) {
-                          final text = terminal.buffer.getText(selection);
-                          terminalController.clearSelection();
-                          await Clipboard.setData(ClipboardData(text: text));
-                        } else {
-                          final data = await Clipboard.getData('text/plain');
-                          final text = data?.text;
-                          if (text != null) {
-                            terminal.paste(text);
+                if (currentTab != null)
+                  MouseRegion(
+                    onEnter: (_) => setState(() => _isHoveringTerminal = true),
+                    onExit: (_) => setState(() => _isHoveringTerminal = false),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0).copyWith(top: 60.0),
+                      child: TerminalView(
+                        currentTab.terminal,
+                        controller: currentTab.controller,
+                        autofocus: true,
+                        backgroundOpacity: 0,
+                        textStyle: TerminalStyle(
+                          fontSize: settings.fontSize,
+                          fontFamily: settings.fontFamily,
+                        ),
+                        cursorType: _getCursorType(settings.cursorStyle),
+                        onSecondaryTapDown: (details, offset) async {
+                          final selection = currentTab.controller.selection;
+                          if (selection != null) {
+                            final text = currentTab.terminal.buffer.getText(selection);
+                            currentTab.controller.clearSelection();
+                            await Clipboard.setData(ClipboardData(text: text));
+                          } else {
+                            final data = await Clipboard.getData('text/plain');
+                            final text = data?.text;
+                            if (text != null) {
+                              currentTab.terminal.paste(text);
+                            }
                           }
-                        }
-                      },
+                        },
+                      ),
+                    ),
+                  ),
+
+                // Title bar
+                WindowTitleBarBox(
+                  child: MoveWindow(
+                    child: Container(
+                      color: settings.backgroundColor,
+                      width: MediaQuery.of(context).size.width,
+                      child: Center(
+                        child: Text(
+                          'Terminal',
+                          style: TextStyle(
+                            color: settings.foregroundColor,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
 
-                // Title bar
-                WindowTitleBarBox(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      MoveWindow(
-                        child: Container(
-                          color: settings.backgroundColor,
-                          width: MediaQuery.of(context).size.width,
-                          height: 30,
-                          child: Center(
-                            child: Text(
-                              'Terminal',
-                              style: TextStyle(
-                                color: settings.foregroundColor,
-                                fontSize: 13,
+                // Tab bar (below title bar)
+                Positioned(
+                  top: 30,
+                  left: 0,
+                  right: 0,
+                  height: 30,
+                  child: Container(
+                    color: settings.backgroundColor,
+                    child: Row(
+                      children: [
+                        // Tabs (reorderable)
+                        Expanded(
+                          child: ReorderableListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            buildDefaultDragHandles: false,
+                            onReorder: _reorderTabs,
+                            proxyDecorator: (child, index, animation) {
+                              return Material(
+                                color: Colors.transparent,
+                                elevation: 4,
+                                child: child,
+                              );
+                            },
+                            itemCount: _tabs.length,
+                            itemBuilder: (context, index) {
+                              final tab = _tabs[index];
+                              final isSelected = index == _currentTabIndex;
+                              return ReorderableDragStartListener(
+                                key: ValueKey(tab.id),
+                                index: index,
+                                child: GestureDetector(
+                                  onTap: () => _selectTab(index),
+                                  child: Container(
+                                    constraints: const BoxConstraints(
+                                      minWidth: 120,
+                                      maxWidth: 180,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? settings.backgroundColor.withValues(alpha: 0.8)
+                                          : Colors.transparent,
+                                      border: Border(
+                                        bottom: BorderSide(
+                                          color: isSelected
+                                              ? Colors.blue
+                                              : Colors.transparent,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.terminal,
+                                          size: 14,
+                                          color: isSelected
+                                              ? settings.foregroundColor
+                                              : settings.foregroundColor.withValues(alpha: 0.5),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Flexible(
+                                          child: Text(
+                                            tab.displayTitle,
+                                            style: TextStyle(
+                                              color: isSelected
+                                                  ? settings.foregroundColor
+                                                  : settings.foregroundColor.withValues(alpha: 0.6),
+                                              fontSize: 12,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (_tabs.length > 1)
+                                          Padding(
+                                            padding: const EdgeInsets.only(left: 8),
+                                            child: GestureDetector(
+                                              onTap: () => _closeTab(index),
+                                              child: MouseRegion(
+                                                cursor: SystemMouseCursors.click,
+                                                child: Icon(
+                                                  Icons.close,
+                                                  size: 14,
+                                                  color: settings.foregroundColor.withValues(alpha: 0.6),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        // Add tab button
+                        GestureDetector(
+                          onTap: _createNewTab,
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Icon(
+                                Icons.add,
+                                size: 18,
+                                color: settings.foregroundColor.withValues(alpha: 0.8),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
 
                 // Settings button (visible on hover)
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 200),
-                  top: 35,
+                  top: 65,
                   right: _shouldShowButtons ? 12 : -50,
                   child: MouseRegion(
                     onEnter: (_) => setState(() => _isHoveringButtons = true),
@@ -284,12 +557,13 @@ class _HomeState extends State<Home> {
                 if (_showAIChat && settings.aiProvider != AIProvider.none)
                   Positioned(
                     right: 60,
-                    top: 35,
+                    top: 65,
                     bottom: 20,
                     width: 320,
                     child: _buildAIChatPanel(settings),
                   ),
-              ],
+                ],
+              ),
             ),
           ),
         );

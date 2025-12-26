@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:provider/provider.dart';
@@ -912,41 +913,15 @@ class _SettingsPageState extends State<SettingsPage>
   }
 
   void _showEditKeyBindingDialog(TerminalSettings settings, String action) {
-    final controller = TextEditingController(text: settings.keyBindings[action]);
-
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF111111),
-        title: Text(
-          'Edit ${_formatKeyBindingName(action)}',
-          style: const TextStyle(color: Colors.white),
-        ),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            labelText: 'Key Binding',
-            labelStyle: TextStyle(color: Colors.grey),
-            hintText: 'e.g., Ctrl+Shift+C',
-            hintStyle: TextStyle(color: Colors.grey),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                settings.setKeyBinding(action, controller.text);
-                Navigator.pop(context);
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
+      builder: (context) => _KeyBindingRecorderDialog(
+        action: action,
+        actionLabel: _formatKeyBindingName(action),
+        currentBinding: settings.keyBindings[action] ?? '',
+        onSave: (binding) {
+          settings.setKeyBinding(action, binding);
+        },
       ),
     );
   }
@@ -1000,6 +975,233 @@ class _SettingsPageState extends State<SettingsPage>
               ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _KeyBindingRecorderDialog extends StatefulWidget {
+  final String action;
+  final String actionLabel;
+  final String currentBinding;
+  final Function(String) onSave;
+
+  const _KeyBindingRecorderDialog({
+    required this.action,
+    required this.actionLabel,
+    required this.currentBinding,
+    required this.onSave,
+  });
+
+  @override
+  State<_KeyBindingRecorderDialog> createState() =>
+      _KeyBindingRecorderDialogState();
+}
+
+class _KeyBindingRecorderDialogState extends State<_KeyBindingRecorderDialog> {
+  late String _recordedBinding;
+  bool _isRecording = false;
+  final FocusNode _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _recordedBinding = widget.currentBinding;
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  String _formatKeyEvent(KeyEvent event) {
+    if (event is! KeyDownEvent) return '';
+
+    final List<String> parts = [];
+
+    if (HardwareKeyboard.instance.isControlPressed) {
+      parts.add('Ctrl');
+    }
+    if (HardwareKeyboard.instance.isAltPressed) {
+      parts.add('Alt');
+    }
+    if (HardwareKeyboard.instance.isShiftPressed) {
+      parts.add('Shift');
+    }
+    if (HardwareKeyboard.instance.isMetaPressed) {
+      parts.add('Meta');
+    }
+
+    final key = event.logicalKey;
+
+    // Skip if only modifier keys are pressed
+    if (key == LogicalKeyboardKey.control ||
+        key == LogicalKeyboardKey.controlLeft ||
+        key == LogicalKeyboardKey.controlRight ||
+        key == LogicalKeyboardKey.alt ||
+        key == LogicalKeyboardKey.altLeft ||
+        key == LogicalKeyboardKey.altRight ||
+        key == LogicalKeyboardKey.shift ||
+        key == LogicalKeyboardKey.shiftLeft ||
+        key == LogicalKeyboardKey.shiftRight ||
+        key == LogicalKeyboardKey.meta ||
+        key == LogicalKeyboardKey.metaLeft ||
+        key == LogicalKeyboardKey.metaRight) {
+      return '';
+    }
+
+    // Get the key label
+    String keyLabel = key.keyLabel;
+    if (keyLabel.isEmpty) {
+      keyLabel = key.debugName ?? 'Unknown';
+    }
+
+    // Format special keys
+    keyLabel = _formatSpecialKey(keyLabel);
+
+    parts.add(keyLabel);
+
+    return parts.join('+');
+  }
+
+  String _formatSpecialKey(String keyLabel) {
+    final Map<String, String> specialKeys = {
+      'Space': 'Space',
+      'Enter': 'Enter',
+      'Escape': 'Esc',
+      'Backspace': 'Backspace',
+      'Delete': 'Delete',
+      'Tab': 'Tab',
+      'Arrow Up': 'Up',
+      'Arrow Down': 'Down',
+      'Arrow Left': 'Left',
+      'Arrow Right': 'Right',
+      'Home': 'Home',
+      'End': 'End',
+      'Page Up': 'PageUp',
+      'Page Down': 'PageDown',
+      'Insert': 'Insert',
+    };
+
+    return specialKeys[keyLabel] ?? keyLabel.toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF111111),
+      title: Text(
+        'Edit ${widget.actionLabel}',
+        style: const TextStyle(color: Colors.white),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Current binding:',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+          KeyboardListener(
+            focusNode: _focusNode,
+            autofocus: true,
+            onKeyEvent: (event) {
+              if (_isRecording) {
+                final binding = _formatKeyEvent(event);
+                if (binding.isNotEmpty) {
+                  setState(() {
+                    _recordedBinding = binding;
+                    _isRecording = false;
+                  });
+                }
+              }
+            },
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _isRecording = true;
+                });
+                _focusNode.requestFocus();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: _isRecording
+                      ? const Color(0xFF1E3A5F)
+                      : const Color(0xFF222222),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _isRecording ? Colors.blue : Colors.grey.shade700,
+                    width: _isRecording ? 2 : 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (_isRecording)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 8),
+                        child: SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.blue,
+                          ),
+                        ),
+                      ),
+                    Text(
+                      _isRecording ? 'Press any key...' : _recordedBinding,
+                      style: TextStyle(
+                        color: _isRecording ? Colors.blue : Colors.white,
+                        fontFamily: 'monospace',
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _isRecording
+                ? 'Press the key combination you want to use'
+                : 'Click the box above to record a new key binding',
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () {
+            setState(() {
+              _recordedBinding = widget.currentBinding;
+              _isRecording = false;
+            });
+          },
+          child: const Text('Reset'),
+        ),
+        ElevatedButton(
+          onPressed: _isRecording
+              ? null
+              : () {
+                  if (_recordedBinding.isNotEmpty) {
+                    widget.onSave(_recordedBinding);
+                    Navigator.pop(context);
+                  }
+                },
+          child: const Text('Save'),
         ),
       ],
     );
