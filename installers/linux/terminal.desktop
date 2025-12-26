@@ -1,9 +1,12 @@
 [Desktop Entry]
 Name=Terminal
+GenericName=Terminal Emulator
 Comment=A simple yet customizable terminal emulator
 Exec=terminal
-Icon=${SNAP}/meta/gui/icon.png
+Icon=terminal
 Terminal=false
 Type=Application
 Categories=System;TerminalEmulator;Utility;
 Keywords=terminal;console;command;shell;bash;zsh;
+StartupNotify=true
+StartupWMClass=terminal

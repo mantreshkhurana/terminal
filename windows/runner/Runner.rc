@@ -89,12 +89,12 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
+            VALUE "CompanyName", "Mantresh Khurana" "\0"
             VALUE "FileDescription", "Terminal" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "Terminal" "\0"
             VALUE "LegalCopyright", "Copyright © 2024 Mantresh Khurana. All rights reserved."
-            VALUE "OriginalFilename", "example.exe" "\0"
+            VALUE "OriginalFilename", "Terminal.exe" "\0"
             VALUE "ProductName", "Terminal" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
