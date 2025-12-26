@@ -92,6 +92,44 @@ class TerminalTab {
   }
 }
 
+class WindowButtons extends StatelessWidget {
+  final Color backgroundColor;
+  final Color foregroundColor;
+
+  const WindowButtons({
+    Key? key,
+    required this.backgroundColor,
+    required this.foregroundColor,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final buttonColors = WindowButtonColors(
+      iconNormal: foregroundColor.withValues(alpha: 0.8),
+      mouseOver: foregroundColor.withValues(alpha: 0.1),
+      mouseDown: foregroundColor.withValues(alpha: 0.2),
+      iconMouseOver: foregroundColor,
+      iconMouseDown: foregroundColor,
+    );
+
+    final closeButtonColors = WindowButtonColors(
+      mouseOver: const Color(0xFFD32F2F),
+      mouseDown: const Color(0xFFB71C1C),
+      iconNormal: foregroundColor.withValues(alpha: 0.8),
+      iconMouseOver: Colors.white,
+      iconMouseDown: Colors.white,
+    );
+
+    return Row(
+      children: [
+        MinimizeWindowButton(colors: buttonColors),
+        MaximizeWindowButton(colors: buttonColors),
+        CloseWindowButton(colors: closeButtonColors),
+      ],
+    );
+  }
+}
+
 class Home extends StatefulWidget {
   const Home({super.key});
 
@@ -458,20 +496,29 @@ class _HomeState extends State<Home> {
 
                 // Title bar
                 WindowTitleBarBox(
-                  child: MoveWindow(
-                    child: Container(
-                      color: settings.backgroundColor,
-                      width: MediaQuery.of(context).size.width,
-                      child: Center(
-                        child: Text(
-                          'Terminal',
-                          style: TextStyle(
-                            color: settings.foregroundColor,
-                            fontSize: 13,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: MoveWindow(
+                          child: Container(
+                            color: settings.backgroundColor,
+                            child: Center(
+                              child: Text(
+                                'Terminal',
+                                style: TextStyle(
+                                  color: settings.foregroundColor,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                      WindowButtons(
+                        backgroundColor: settings.backgroundColor,
+                        foregroundColor: settings.foregroundColor,
+                      ),
+                    ],
                   ),
                 ),
 
